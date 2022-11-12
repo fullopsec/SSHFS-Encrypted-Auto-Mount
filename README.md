@@ -71,6 +71,7 @@ reboot the client
 when restarted verify everything works
 
 >systemctl status media-databank.mount
+
 >ls -l /media
 
 verify auto reconnect if server fails by rebooting it and watch what happens with your client  when server rebooted
