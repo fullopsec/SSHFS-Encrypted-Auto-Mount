@@ -1,81 +1,87 @@
-# sshfs
-SSHFS: Automatically mounting remote encrypted partition with no password
 
-on client and server:
+# SSHFS - Auto mount remote encrypted partition
+
+This repository contains instructions for automatically mounting a remote encrypted partition with no password using SSHFS. This technique can be used on fully encrypted servers and computers to greatly benefit your operational security while being practical.
+
+## Prerequisites
+Before using SSHFS, make sure to have it installed on both the client and server. You can do so by running the following command on both machines:
+```
 sudo apt install sshfs 
 sshfs -V
+```
 
-on client:
+## Mounting the remote partition
+On the client machine, create the mount point and set the rights for the mount point using the following commands:
+```
+sudo mkdir /media/databank
+sudo chown daniel /media/databank
+chmod 700 /media/databank/
+```
 
-create the mount point
+Then, try to mount the remote partition using SSHFS. Replace the IP address with the server's IP address:
+```
+sshfs 192.168.1.35:/media/databank /media/databank
+```
 
->sudo mkdir /media/databank  
+Verify that it works by navigating to the mount point and creating a test file:
+```
+cd /media/databank/
+touch testtest
+```
 
->sudo chown daniel /media/databank 
+## Generating an Ed25519 key
+To generate an Ed25519 key, run the following command on the client machine:
+```
+ssh-keygen -t ed25519 -a 100
+```
 
-set rights for the mount point
+Copy your key to the server using the following command, replacing the path to the key and the IP address with your own:
+```
+ssh-copy-id -i /home/daniel/.ssh/id_ed25519.pub daniel@192.168.1.35
+```
 
->chmod 700 /media/databank/
+Try to connect to the server using your key:
+```
+ssh daniel@192.168.1.35
+```
 
-try to mount (the IP is your server IP)
+## Editing fstab on the client
+Edit your fstab on the client machine using the following command, replacing the IP address and mount points with your own:
+```
+sudo nano /etc/fstab
+```
 
->sshfs 192.168.1.35:/media/databank /media/databank
+Add the following line to your fstab, again replacing the IP address and mount points:
+```
+daniel@192.168.1.35:/media/databank /media/databank fuse.sshfs x-systemd.automount,x-systemd.requires=network-online.target,_netdev,user,idmap=user,transform_symlinks,identityfile=/home/daniel/.ssh/id_ed25519,allow_other,default_permissions,uid=1000,gid=1000,exec 0 0
+```
 
-test that it works
+## Unmounting and remounting
+Unmount everything using the following command:
+```
+sudo umount -a
+```
 
->cd /media/databank/
+Remount everything using the following command. This is extremely important as it enables us to accept the key or it'll crash at reboot:
+```
+sudo mount -a
+```
 
->touch testtest
+Set the rights again using the following command:
+```
+chmod 700 /media/databank/
+```
 
-generate an Ed25519 key 
-it was developed without any known government involvement. contrary to ECDSA
-Stay well away from DSA (“ssh-dss”) keys as they are backdoored by the ₦⒮ⓐ
+## Reboot and verification
+Reboot the client machine using the following command:
+```
+sudo reboot now
+```
 
->ssh-keygen -t ed25519 -a 100
+After restarting, verify that everything works using the following commands:
+```
+systemctl status media-databank.mount
+ls -l /media
+```
 
-Copy your key to the server
-
->ssh-copy-id -i /home/daniel/.ssh/id_ed25519.pub daniel@192.168.1.35
-
-try to connect via your key
-
->ssh daniel@192.168.1.35
-
-edit your fstab on the client
-
->sudo nano /etc/fstab
-
-of course change the IP and mount points so it correspond to yours
-you can also remove or add arguments if you want
-
->daniel@192.168.1.35:/media/databank /media/databank fuse.sshfs x-systemd.automount,x-systemd.requires=network-online.target,_netdev,user,idmap=user,transform_symlinks,identityfile=/home/daniel/.ssh/id_ed25519,allow_other,default_permissions,uid=1000,gid=1000,exec 0 0
-
->cd /media
-
-unmount everything
-
->sudo umount -a
-
-remount everything: extremely important as it enable us to accept the key or it'll crash at reboot
-
->sudo mount -a               
-
-set the rights again!
-
->chmod 700 /media/databank/
-
-reboot the client
-
->sudo reboot now
-
-when restarted verify everything works
-
->systemctl status media-databank.mount
-
->ls -l /media
-
-verify auto reconnect if server fails by rebooting it and watch what happens with your client  when server rebooted
-
-I use this techique on my fully encrypted servers and computers
-I full encrypt all my installs(there is almost no performance cost and I never had a problem). It will greatly benefit your Opsec while being practical.
-
+To verify auto-reconnect if the server fails, reboot it and watch what happens with your client machine when the server is rebooted.
