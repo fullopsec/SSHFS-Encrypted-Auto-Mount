@@ -3,6 +3,10 @@
 
 This repository contains instructions for automatically mounting a remote encrypted partition with no password using SSHFS. This technique can also be used on fully encrypted servers and computers to greatly benefit your operational security while being practical.
 
+## Video tutorial
+
+https://www.youtube.com/watch?v=gEeHH7n07YE
+
 ## Prerequisites
 Before using SSHFS, make sure to have it installed on both the client and server. You can do so by running the following command on both machines:
 ```
